@@ -1,0 +1,15 @@
+{
+  "service": "input-attendance-service",
+  "dockerComposeFile": "../docker/docker-compose.yml",
+  "workspaceFolder": "/workdir",
+  "customizations": {
+    "vscode": {
+      "extensions": ["eamodio.gitlens", "ms-python.black-formatter"],
+      "settings": {
+        "editor.defaultFormatter": "ms-python.black-formatter",
+        "editor.formatOnSave": true,
+        "editor.tabSize": 2
+      }
+    }
+  }
+}

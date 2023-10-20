@@ -1,0 +1,6 @@
+###### Requirements without Version Specifiers ######`
+selenium
+webdriver-manager
+python-dotenv
+pymupdf
+boto3

@@ -1,0 +1,11 @@
+version: '3.9'
+services:
+  input-attendance-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: input-attendance-service
+    volumes:
+      - ../:/workdir
+    tty: true
+
