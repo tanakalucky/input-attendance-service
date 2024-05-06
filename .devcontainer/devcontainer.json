@@ -4,7 +4,11 @@
   "workspaceFolder": "/workdir",
   "customizations": {
     "vscode": {
-      "extensions": ["eamodio.gitlens", "ms-python.black-formatter"],
+      "extensions": [
+        "eamodio.gitlens",
+        "ms-python.black-formatter",
+        "GitHub.copilot"
+      ],
       "settings": {
         "editor.defaultFormatter": "ms-python.black-formatter",
         "editor.formatOnSave": true,
