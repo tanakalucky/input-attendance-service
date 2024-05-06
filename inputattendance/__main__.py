@@ -13,8 +13,8 @@ def main():
 
     bh.clear_attendance()
 
-    attendance_data = extract_attendance_data_from_pdf()
-    bh.input_attendance(attendance_data)
+    attendance_data_list = extract_attendance_data_from_pdf()
+    bh.input_attendance(attendance_data_list)
 
     bh.save_attendance()
 

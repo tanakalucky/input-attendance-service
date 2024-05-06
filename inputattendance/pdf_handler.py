@@ -2,44 +2,71 @@ from pathlib import Path
 import fitz
 import calendar
 import sys
-import tempfile
+from datetime import time
+from io import BytesIO
+
 
 sys.path.append(str(Path("__file__").resolve().parent))
 from config.const import *
 import boto3
 
 
-def extract_attendance_data_from_pdf():
+def extract_attendance_data_from_pdf() -> list[dict[Attendance, str]]:
     s3_client = boto3.client("s3")
 
-    with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
-        s3_client.download_fileobj(S3_BUCKET_NAME, S3_OBJECT_KEY, tmp_file)
-        tmp_file_path = tmp_file.name
+    obj = s3_client.get_object(Bucket=S3_BUCKET_NAME, Key=S3_OBJECT_KEY)
+    fs = obj["Body"].read()
+    pdf = fitz.open(stream=BytesIO(fs), filetype="pdf")
 
-    pdf = fitz.open(tmp_file_path)
+    attendance_data_list: list[dict[Attendance, str]] = []
+    target_page: fitz.Page = pdf[0]
+    target_table = target_page.find_tables()[0].extract()
+    target_year = int(TARGET_YEAR)
+    target_month = int(TARGET_MONTH)
+    day_range = get_day_range(target_year, target_month)
 
-    attendance_data = []
-    for page in range(len(pdf)):
-        row_data = pdf[page].get_text().split("\n")
+    for data in target_table:
+        day = data[0]
 
-        first_day = 1
-        end_day = calendar.monthrange(int(TARGET_YEAR), int(TARGET_MONTH))[1]
+        if day not in day_range:
+            continue
 
-        for day in range(first_day, end_day + 1):
-            attendance_start_idx = row_data.index(str(day))
+        target_data: list = data[2:4]
+        attendance_data: dict[Attendance, str] = {
+            "startTime": target_data[0],
+            "endTime": target_data[1],
+            "breakTime": "",
+        }
 
-            next_day = str(day + 1)
-            try:
-                attendance_end_idx = (
-                    len(row_data) if day == end_day else row_data.index(next_day)
-                )
-            except ValueError:
-                print("勤怠の対象年月が正しいかご確認ください。")
-                sys.exit()
+        if attendance_data["startTime"] == "":
+            attendance_data_list.append(attendance_data)
+            continue
 
-            attendance_of_the_day = row_data[attendance_start_idx:attendance_end_idx]
-            attendance_data.append(attendance_of_the_day)
+        hour = int(attendance_data["endTime"].split(":")[0])
+        minute = int(attendance_data["endTime"].split(":")[1])
+
+        rest_start_time = time(11, 30)
+        end_time = time(hour, minute)
+        fixed_end_time = time(17, 30)
+
+        if end_time <= rest_start_time:
+            attendance_data_list.append(attendance_data)
+            continue
+
+        if end_time <= fixed_end_time:
+            attendance_data["breakTime"] = "00:45"
+            attendance_data_list.append(attendance_data)
+        else:
+            attendance_data["breakTime"] = "01:15"
+            attendance_data_list.append(attendance_data)
 
     pdf.close()
 
-    return attendance_data
+    return attendance_data_list
+
+
+def get_day_range(target_year, target_month) -> list[str]:
+    first_day = 1
+    end_day = calendar.monthrange(target_year, target_month)[1]
+
+    return list(map(str, range(first_day, end_day + 1)))

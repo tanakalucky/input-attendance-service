@@ -100,28 +100,18 @@ class BrowserHandler:
         for input in time_inputs:
             input.clear()
 
-    def input_attendance(self, attendance_data):
+    def input_attendance(self, attendance_data_list: list[dict[Attendance, str]]):
         driver = self.driver
 
         time_inputs = driver.find_elements(By.CLASS_NAME, "form-type-time")
 
-        for idx, item in enumerate(attendance_data):
-            day_off = len(item) == 2
-            if day_off:
-                continue
-
-            start_time = item[2]
-            end_time = item[3]
-
-            if len(item) == 5:
-                break_time = item[4]
-
+        for idx, data in enumerate(attendance_data_list):
             # 1日につき3つのインプット要素
             time_input_idx = idx * 3
 
-            time_inputs[time_input_idx].send_keys(start_time)
-            time_inputs[time_input_idx + 1].send_keys(end_time)
-            time_inputs[time_input_idx + 2].send_keys(break_time)
+            time_inputs[time_input_idx].send_keys(data["startTime"])
+            time_inputs[time_input_idx + 1].send_keys(data["endTime"])
+            time_inputs[time_input_idx + 2].send_keys(data["breakTime"])
 
     def save_attendance(self):
         driver = self.driver
